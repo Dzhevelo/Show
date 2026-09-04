@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎉 Аплодисменты + Фонарик!</title>
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --accent-color: #f1c40f;
+            --text-color: #ecf0f1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- ЭФФЕКТ ФОНАРИКА (ЯРКИЙ ЭКРАН) --- */
+        .flashlight-mode {
+            background: white !important;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .light-beam {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 70%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .flash-effect {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200px; height: 200px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            box-shadow: 0 0 50px rgba(255,255,255,0.8);
+            pointer-events: none;
+        }
+
+        /* Конфетти */
+        .confetti {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute; background: var(--accent-color); border-radius: 50%; opacity: 0.8; animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) scale(1); opacity: 0.8; }
+            100% { transform: translateY(110vh) scale(0.5); opacity: 0; }
+        }
+
+        /* Основной экран */
+        .main-screen { text-align: center; z-index: 20; padding: 20px; max-width: 90vw; position: relative; }
+        h1 { font-size: 3rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        p.subtitle { font-size: 1.2rem; margin-bottom: 40px; opacity: 0.9; }
+
+        /* Кнопка */
+        .btn {
+            padding: 18px 45px; font-size: 1.1rem; background: transparent; color: white;
+            border: 2px solid var(--accent-color); cursor: pointer; transition: all 0.3s;
+            text-transform: uppercase; font-weight: bold;
+        }
+        .btn.flashlight-btn { background: #fff; color: #000; border-color: #ccc; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .btn:hover { background: var(--accent-color); color: #000; box-shadow: 0 0 25px rgba(241, 196, 15, 0.7); }
+
+        /* Анимация рук */
+        .clap-animation { position: relative; width: 80px; height: 80px; margin: 40px auto; z-index: 10; }
+        .hand {
+            position: absolute; width: 40px; height: 60px; background: #fff;
+            border-radius: 12px 12px 0 0; transform-origin: bottom center;
+            animation: clap 0.2s infinite alternate; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .left-hand { left: 0; transform: rotate(-15deg); }
+        .right-hand { right: 0; transform: rotate(15deg); }
+        @keyframes clap {
+            0% { transform: rotate(-15deg) translateY(0); }
+            50% { transform: rotate(0deg) translateY(-10px); }
+            100% { transform: rotate(15deg) translateY(0); }
+        }
+
+        /* Экран загрузки */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-10px, -10px); }
+            50% { transform: translate(10px, 10px); }
+            75% { transform: translate(-10px, 10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Конфетти -->
+    <div class="confetti" id="confetti"></div>
+
+    <!-- Лоадер -->
+    <div id="loader">
+        <div style="font-size: 1.2rem; margin-bottom: 15px;">Подготовка шоу...</div>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Эффект вспышки (для фонарика) -->
+    <div class="flash-effect" id="flash"></div>
+    <div class="light-beam"></div>
+
+    <!-- Основной контент -->
+    <div class="main-screen">
+        <h1 id="title">Поздравляем!</h1>
+        <p class="subtitle">Ты это заслужил!</p>
+        
+        <div class="clap-animation">
+            <div class="hand left-hand"></div>
+            <div class="hand right-hand"></div>
+        </div>
+
+        <button class="btn" id="play-btn" onclick="startShow()">Аплодировать!</button>
+        <br><br>
+        <button class="btn flashlight-btn" id="light-btn" onclick="toggleFlashlight()" style="display:none;">💡 Включить фонарик</button>
+    </div>
+
+    <script>
+        // 1. Генерация конфетти
+        const confettiContainer = document.getElementById('confetti');
+        for (let i = 0; i < 150; i++) {
+            const piece = document.createElement('div');
+            piece.classList.add('confetti-piece');
+            piece.style.left = Math.random() * 100 + 'vw';
+            piece.style.animationDuration = Math.random() * 3 + 2 + 's';
+            piece.style.animationDelay = Math.random() + 's';
+            piece.style.width = Math.random() * 8 + 4 + 'px';
+            piece.style.height = piece.style.width;
+            piece.style.background = `hsl(${Math.random() * 60 + 300}, 70%, 50%)`;
+            confettiContainer.appendChild(piece);
+        }
+
+        // 2. Генерация звука аплодисментов (Web Audio API)
+        let audioCtx = null;
+        let noiseNode = null;
+        let filter = null;
+        let compressor = null;
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Создаем шум
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.4, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = buffer;
+
+            // Фильтр (чтобы звучало как хлопок)
+            filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+
+            // Компрессор (чтобы было громко)
+            compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.value = -20;
+            compressor.ratio.value = 10;
+
+            noiseNode.connect(filter);
+            filter.connect(compressor);
+            compressor.connect(audioCtx.destination);
+        }
+
+        function playSound() {
+            if (!audioCtx) initAudio();
+            else audioCtx.resume(); // Разблокировка звука
+
+            const newNode = audioCtx.createBufferSource();
+            newNode.buffer = noiseNode.buffer;
+            newNode.connect(filter);
+            newNode.connect(compressor);
+            
+            newNode.start(0);
+        }
+
+        // 3. Логика Фонарика (Белый экран)
+        let isFlashlightOn = false;
+        const flashElement = document.getElementById('flash');
+        const lightBeam = document.querySelector('.light-beam');
+
+        function toggleFlashlight() {
+            isFlashlightOn = !isFlashlightOn;
+            const body = document.body;
+            const btn = document.getElementById('light-btn');
+
+            if (isFlashlightOn) {
+                body.classList.add('flashlight-mode');
+                btn.textContent = "🔦 Выключить фонарик";
+                btn.style.backgroundColor = "#333";
+                btn.style.color = "#fff";
+                
+                // Эффект вспышки при включении
+                flashElement.style.opacity = '1';
+                flashElement.style.transform = 'translate(-50%, -50%) scale(1)';
+                setTimeout(() => {
+                    flashElement.style.opacity = '0';
+                    flashElement.style.transform = 'translate(-50%, -50%) scale(0)';
+                }, 200);
+                
+                lightBeam.style.opacity = '1';
+            } else {
+                body.classList.remove('flashlight-mode');
+                btn.textContent = "💡 Включить фонарик";
+                btn.style.backgroundColor = "";
+                btn.style.color = "";
+                lightBeam.style.opacity = '0';
+            }
+        }
+
+        // 4. Запуск шоу
+        function startShow() {
+            document.getElementById('loader').style.display = 'none';
+            
+            // Звук
+            playSound();
+
+            // Визуал: тряска
+            document.body.style.animation = 'shake 0.4s';
+            setTimeout(() => document.body.style.animation = '', 400);
+
+            // Вспышка света (одна)
+            flashElement.style.opacity = '1';
+            flashElement.style.transform = 'translate(-50%, -50%) scale(1)';
+            setTimeout(() => {
+                flashElement.style.opacity = '0';
+                flashElement.style.transform = 'translate(-50%, -50%) scale(0)';
+            }, 150);
+
+            // Показываем кнопку фонарика
+            document.getElementById('light-btn').style.display = 'inline-block';
+
+            // Меняем заголовок на радостный
+            document.getElementById('title').textContent = "УРА! 🎉";
+        }
+
+        // Обработка клика для разблокировки звука (на мобильных)
+        window.addEventListener('click', () => {
+            // Если звук еще не инициализирован, но кнопка нажата - ок, функция startShow сделает это
+        }, { once: true });
+
+    </script>
+</body>
+</html>
